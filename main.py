@@ -5,7 +5,7 @@ import enum
 from enum import Enum
 import os
 import librosa
-import features
+import features, saveDataset
 
 class Genre(Enum):
     BLUES = 1
@@ -54,60 +54,43 @@ from sklearn.model_selection import StratifiedKFold
 # training data 40 section in every categories
 # test data 10 section in every categories
 
-def dataset():
-    print("read wav files")
-    x = []
-    y = []
-    # wav_path = []
-    path = os.getcwd() + '\\res\\'
-    for r, d, f in os.walk(path):
-        for i in f:
-            if('.wav' in i):
-                # wav_path.append(os.path.join(r, i))
-                wav_array, sr = librosa.load(os.path.join(r, i), sr=22050)
-                # sr, wav_array = wavfile.read(os.path.join(r, i))
-                x.append(wav_array) # np array
+def getData():
 
-                genre_name = r.split('\\res\\')[1]
-                y.append(genre_map[genre_name].value) # integer
-                
-    # print(len(wav_path))
-    # for i in range(len(x)):
-    #     print(x[i])
-    #     print(y[i])
-    # np_x = np.asarray(x)
-    # np_y = np.asarray(y)
-    # print(x)
-    # print(np_x)
-    return x, y
+    if(os.path.exists('df_data_no_index.csv')):
+        df = pd.read_csv('df_data_no_index.csv')
+        df_y = df['genre']
+        df_x = df.drop('genre', axis=1)
+        return df_x, df_y
+    
+    # features haven't been created
+    print("Create Dataset")
+    signal, y = saveDataset.dataset()
+    df_y = pd.DataFrame(data=y, columns=['genre'])
 
+    # construct features
+    print("Feature Extraction")
+    df_x = pd.DataFrame()
+    for i in range(0, len(signal)):        
+        new_x = pd.DataFrame(features.extract(signal[i]), index=[i])
+        df_x = df_x.append(new_x)
+        
+    # saveDataset.saveFeature(df_x, df_y)
+    return df_x, df_y
+    
 
 def main():
     # print(type(Genre['JAZZ'].value)) # 6 (int)
+    df_x, df_y = getData()
 
-    # construct dataset
-    signal, y = dataset()
-
-    # construct features
-    df = pd.DataFrame()
-    for i in range(4, len(signal), 50):        
-        new_x = pd.DataFrame(features.extract(signal[i]), index=[i])
-        df = df.append(new_x)
-    
-    print(df.head(10))
-
+    print("5 cross validation")
     # separate to training set and test set
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=888)
 
-    # for train_idx, test_idx in kfold.split(x, y):
+    for train_idx, test_idx in kfold.split(df_x, df_y):
+        x_train, x_test = df_x.iloc[train_idx], df_x.iloc[test_idx]
+        y_train, y_test = df_y.iloc[train_idx], df_y.iloc[test_idx]
 
-        # x_train, x_test = x.iloc[train_idx], x.iloc[test_idx]
-        # y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-
-        # print(y_train)
-        # print(y_test)
-
-        # GMM !
+        # GMM 
 
         # scores = model.evaluate(x[test], y[test])
         # print(scores)

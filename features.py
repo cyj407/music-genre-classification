@@ -15,9 +15,9 @@ def feature_low_energy(wave):
     # every 43 analysis window forms a texture window
     num_texture_win = 30
     total_rms_texture_win = np.zeros(num_texture_win)
-    k = 0
+    # k = 0
     for i in range(num_texture_win):
-        total_rms_texture_win[k] = np.sum(rms_per_win[0][43 * i: 43 * (i+1)])
+        total_rms_texture_win[i] = np.sum(rms_per_win[0][43 * i: 43 * (i+1)]) / 43
     avr_texture_win = np.sum(total_rms_texture_win) / num_texture_win
     
     # analysis windows rms energy < average of texture window
@@ -25,7 +25,7 @@ def feature_low_energy(wave):
     return p
 
 def findTimbral(wave):  # 19 dimensions
-    print('Finding Timbral Features....')
+    # print('Finding Timbral Features....')
     timbral_feature = {}
 
     centroid = feature.spectral_centroid(wave)
@@ -102,7 +102,8 @@ def findRhythmic(wave): # 3 dimensions
 #     pitch_feature.append(np.sum(modified_fph))  # sum of the histogram
 
 def extract(wave):
-    print('feature extraction')
+    # print('feature extraction')
+    # feature = {'test': 87}
     feature = {}
 
     timbral = findTimbral(wave)
