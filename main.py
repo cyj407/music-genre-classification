@@ -91,10 +91,10 @@ def trainModel(df_x, df_y):
             n_estimators=250,
             criterion='entropy',
             min_weight_fraction_leaf=0.01,
-            random_state=2000)    # 0.738
+            random_state=2000)
         # model = clf1
 
-        clf2 = SVC(C=60.0, kernel='rbf', gamma=0.1, random_state=2000)   # 0.758
+        clf2 = SVC(C=64.0, kernel='rbf', gamma=0.1, random_state=2000)
         # model = clf2
 
         clf3 = LogisticRegression(
@@ -106,7 +106,7 @@ def trainModel(df_x, df_y):
             random_state=2000)
         # model = clf3
 
-        model = VotingClassifier(   # 0.782
+        model = VotingClassifier(   # 0.784
             estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
 
         model.fit(train_x, train_y)
