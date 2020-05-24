@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-# from scipy.io import wavfile
 import enum
 from enum import Enum
 import os
@@ -38,14 +37,11 @@ def dataset():
     print("read wav files")
     x = []
     y = []
-    # wav_path = []
     path = os.getcwd() + '\\res\\'
     for r, d, f in os.walk(path):
         for i in f:
             if('.wav' in i):
-                # wav_path.append(os.path.join(r, i))
                 wav_array, sr = librosa.load(os.path.join(r, i), sr=22050)
-                # sr, wav_array = wavfile.read(os.path.join(r, i))
                 x.append(wav_array) # np array
 
                 genre_name = r.split('\\res\\')[1]
@@ -55,8 +51,8 @@ def dataset():
 
 def saveFeature(x, y):
     x['genre'] = y
-    x.to_csv(os.getcwd() + '\\df_data_no_index_10mfcc.csv', index=0)
-    x.to_csv(os.getcwd() + '\\df_data_with_index_10mfcc.csv')
+    x.to_csv(os.getcwd() + '\\df_no_index_10mfcc.csv', index=0)
+    x.to_csv(os.getcwd() + '\\df_with_index_10mfcc.csv')
 
 def main():
     print(os.getcwd())

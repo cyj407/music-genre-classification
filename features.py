@@ -1,23 +1,20 @@
 from librosa.onset import onset_strength
 from librosa import feature, beat, decompose
-import pywt
 import librosa
 import math
 import numpy as np
 from scipy.signal import hilbert
 import pandas as pd
-
 hop_size = 512
 
 def feature_low_energy(wave):
     rms_per_win = feature.rms(y=wave, hop_length=hop_size)
-    # print(len(rms_per_win[0]))   # total analysis windows
-    # every 43 analysis window forms a texture window
     num_texture_win = 30
+    analy_in_tex = 43   # every 43 analysis window forms a texture window
     total_rms_texture_win = np.zeros(num_texture_win)
-    # k = 0
     for i in range(num_texture_win):
-        total_rms_texture_win[i] = np.sum(rms_per_win[0][43 * i: 43 * (i+1)]) / 43
+        total_rms_texture_win[i] = np.sum(
+            rms_per_win[0][analy_in_tex * i: analy_in_tex * (i+1)]) / analy_in_tex
     avr_texture_win = np.sum(total_rms_texture_win) / num_texture_win
 
     # analysis windows rms energy < average of texture window
@@ -25,7 +22,6 @@ def feature_low_energy(wave):
     return p
 
 def findTimbral(wave):  # 19 dimensions
-    # print('Finding Timbral Features....')
     timbral_feature = {}
 
     centroid = feature.spectral_centroid(wave)
@@ -44,7 +40,7 @@ def findTimbral(wave):  # 19 dimensions
     timbral_feature['mu_zcr'] = np.mean(zero_crossing)
     timbral_feature['var_zcr'] = np.var(zero_crossing)
 
-    five_mfcc = feature.mfcc(wave, n_mfcc=10)    # n_mfcc=5 10 dim
+    five_mfcc = feature.mfcc(wave, n_mfcc=10)    # n_mfcc = 10 dim
     i = 1
     for coef in five_mfcc:
         timbral_feature['mu_mfcc' + str(i)] = np.mean(coef)
@@ -56,37 +52,13 @@ def findTimbral(wave):  # 19 dimensions
 
     return timbral_feature
 
-
 def findRhythmic(wave): # 3 dimensions
     rhythm_feature = {}
     
     env = onset_strength(wave)
     tempogram = feature.tempogram(onset_envelope=env, hop_length=hop_size)
     rhythm_feature['tempo_sum'] = np.sum(tempogram)
-    # rhythm_feature.append(np.sum(tempogram))
 
-    # rhythm_feature['tempo_max'] = np.max(tempogram)
-    # rhythm_feature['histo_peak_bin'] = tempogram[1]
-    # tempo_freq = librosa.tempo_frequencies(tempogram.shape[0])
-    # rhythm_feature['tempo_freq'] = np.mean(tempo_freq[1:]) # 44.032683 
-    # rhythm_feature.append(np.max(tempo_freq))
-
-    # global
-    # autocorr = librosa.autocorrelate(env, max_size=tempogram.shape[0])
-    # autocorr = librosa.util.normalize(autocorr)
-    # global_tempo = librosa.beat.tempo(env, hop_length=hop_size)[0]  #  139.60114
-
-    tempo, beats = librosa.beat.beat_track(wave, hop_length=hop_size)
-    rhythm_feature['tempo'] = tempo
-    # rhythm_feature.append(tempo)
-
-    timestamp = librosa.frames_to_time(beats, hop_length=hop_size)
-    interval = []
-    for i in range(1, len(timestamp)):
-        interval.append(timestamp[i] - timestamp[i-1])
-    period = sum(interval) / len(interval)
-    rhythm_feature['tempo_period'] = period
-    # rhythm_feature.append(period)
     return rhythm_feature
 
 def extract(wave):

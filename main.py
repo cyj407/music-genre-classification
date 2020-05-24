@@ -12,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils import validation
 
 df_column = ['mu_centroid', 'var_centroid',
         'mu_rolloff', 'var_rolloff',
@@ -27,34 +28,12 @@ df_column = ['mu_centroid', 'var_centroid',
         'mu_mfcc8', 'var_mfcc8',
         'mu_mfcc9', 'var_mfcc9',
         'mu_mfcc10', 'var_mfcc10',
-        'low_energy',
-        'tempo', 'tempo_period',
-        'tempo_sum'
-        ]
-
-select_feature = ['mu_centroid', 'var_centroid',
-        'mu_rolloff', 'var_rolloff',
-        'mu_flux', 'var_flux',
-        'mu_zcr', 'var_zcr',
-        'mu_mfcc1', 'var_mfcc1',
-        'mu_mfcc2', 'var_mfcc2',
-        'mu_mfcc3', 'var_mfcc3',
-        'mu_mfcc4', 'var_mfcc4',
-        'mu_mfcc5', 'var_mfcc5',
-        'mu_mfcc6', 'var_mfcc6',
-        'mu_mfcc7', 'var_mfcc7',
-        'mu_mfcc8', 'var_mfcc8',
-        'mu_mfcc9', 'var_mfcc9',
-        'mu_mfcc10', 'var_mfcc10',
-        'low_energy',
-        # 'tempo', 'tempo_period',      # lower
-        'tempo_sum'
-        ]
+        'low_energy','tempo_sum']
 
 def getData():
 
-    if(os.path.exists('df_data_no_index_10mfcc.csv')):
-        df = pd.read_csv('df_data_no_index_10mfcc.csv')
+    if(os.path.exists('df_no_index_10mfcc.csv')):
+        df = pd.read_csv('df_no_index_10mfcc.csv')
         df_y = df['genre']
         df_x = df.drop('genre', axis=1)
         return df_x, df_y
@@ -62,12 +41,17 @@ def getData():
     # features haven't been created
     print("Create Dataset")
     signal, y = saveDataset.dataset()
+    # df_y = pd.DataFrame(data=validation.column_or_1d(y, warn=False), columns=['genre'])
+    # df_y = validation.column_or_1d(df_y, warn=False)
     df_y = pd.DataFrame(data=y, columns=['genre'])
+    df_y = validation.column_or_1d(df_y)
 
     # construct features
     print("Feature Extraction")
     df_x = pd.DataFrame()
-    for i in range(0, len(signal)):        
+    for i in range(len(signal)):
+        if(i % 50 == 0): 
+            print('audio {}'.format(i + 1))       
         new_x = pd.DataFrame(features.extract(signal[i]), index=[i])
         df_x = df_x.append(new_x)
         
@@ -76,7 +60,7 @@ def getData():
     
 def trainModel(df_x, df_y):
 
-    df_x = df_x[select_feature]
+    # df_x = df_x[select_feature]
 
     train_acc_list = []
     test_acc_list = []
@@ -100,8 +84,8 @@ def trainModel(df_x, df_y):
         clf3 = LogisticRegression(
             penalty='l2',
             C=300.0,
-            solver='lbfgs',
-            max_iter=1000,
+            solver='newton-cg',
+            max_iter=500,
             multi_class='multinomial',
             random_state=2000)
         # model = clf3
@@ -117,9 +101,10 @@ def trainModel(df_x, df_y):
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
 
-    print(train_acc_list)
-    print(test_acc_list)
-    print('average train accuracy: {}\naverage validate accuracy: {}'.format(
+    # if(np.mean(test_acc_list) >= 0.784):
+        # print(train_acc_list)
+        # print(test_acc_list)
+    print('Average train accuracy: {}\nAverage validate accuracy: {}'.format(
         np.mean(train_acc_list), np.mean(test_acc_list)
     ))
 
@@ -127,8 +112,8 @@ def trainModel(df_x, df_y):
 
 def plotImportance(model):
     print(model.feature_importances_)
-    feat_importances = pd.Series(model.feature_importances_, index=select_feature)
-    feat_importances.nlargest(len(select_feature)).plot(kind='barh')
+    feat_importances = pd.Series(model.feature_importances_, index=df_column)
+    feat_importances.nlargest(len(df_column)).plot(kind='barh')
     plt.show()
 
 
@@ -140,6 +125,7 @@ def main():
     df_x = pd.DataFrame(dataset_numpy, columns=df_column)
 
     model = trainModel(df_x, df_y)
+    # plotImportance(model)
 
 if __name__ == '__main__':
     main()
