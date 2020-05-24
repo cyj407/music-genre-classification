@@ -6,6 +6,7 @@ from enum import Enum
 import os
 import librosa
 import features
+import sklearn.preprocessing
 
 class Genre(Enum):
     BLUES = 1
@@ -54,8 +55,8 @@ def dataset():
 
 def saveFeature(x, y):
     x['genre'] = y
-    x.to_csv(os.getcwd() + '\\df_data_no_index.csv', index=0)
-    x.to_csv(os.getcwd() + '\\df_data_with_index.csv')
+    x.to_csv(os.getcwd() + '\\df_data_no_index_10mfcc.csv', index=0)
+    x.to_csv(os.getcwd() + '\\df_data_with_index_10mfcc.csv')
 
 def main():
     print(os.getcwd())

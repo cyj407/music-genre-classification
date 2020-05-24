@@ -2,3 +2,5 @@ __pycache__
 /res/
 .vscode
 *.csv
+*.ipynb
+.ipynb_checkpoints/

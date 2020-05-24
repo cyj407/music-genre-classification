@@ -19,7 +19,7 @@ def feature_low_energy(wave):
     for i in range(num_texture_win):
         total_rms_texture_win[i] = np.sum(rms_per_win[0][43 * i: 43 * (i+1)]) / 43
     avr_texture_win = np.sum(total_rms_texture_win) / num_texture_win
-    
+
     # analysis windows rms energy < average of texture window
     p = sum(analysis_win < avr_texture_win for analysis_win in rms_per_win[0]) / len(rms_per_win[0])
     return p
@@ -44,7 +44,7 @@ def findTimbral(wave):  # 19 dimensions
     timbral_feature['mu_zcr'] = np.mean(zero_crossing)
     timbral_feature['var_zcr'] = np.var(zero_crossing)
 
-    five_mfcc = feature.mfcc(wave, n_mfcc=5)    # 10 dim
+    five_mfcc = feature.mfcc(wave, n_mfcc=10)    # n_mfcc=5 10 dim
     i = 1
     for coef in five_mfcc:
         timbral_feature['mu_mfcc' + str(i)] = np.mean(coef)
@@ -89,21 +89,7 @@ def findRhythmic(wave): # 3 dimensions
     # rhythm_feature.append(period)
     return rhythm_feature
 
-# def findPitch(wave):
-#     pitch_feature = []
-#     pitches, magnitudes = librosa.piptrack(wave, n_fft=512, fmin=27, fmax=4186)
-#     n = librosa.hz_to_midi(pitches)
-#     c = np.mod( np.multiply((np.mod(n, 12) , 7), 12))
-#     modified_fph = np.zeros(12)
-#     for i in range(len(magnitudes)):
-#         modified_fph[c[i]] = modified_fph[c[i]] + magnitudes[i]
-    
-#     pitch_feature.append(np.max(modified_fph))  # max amplitude in the histogram
-#     pitch_feature.append(np.sum(modified_fph))  # sum of the histogram
-
 def extract(wave):
-    # print('feature extraction')
-    # feature = {'test': 87}
     feature = {}
 
     timbral = findTimbral(wave)
@@ -111,6 +97,5 @@ def extract(wave):
 
     rhythm = findRhythmic(wave)
     feature.update(rhythm)
-    
-    # findPitch(wave)
+
     return feature
