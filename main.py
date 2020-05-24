@@ -94,18 +94,19 @@ def trainModel(df_x, df_y):
             random_state=2000)    # 0.738
         # model = clf1
 
-        clf2 = SVC(C=90, kernel='rbf', gamma=0.1, random_state=1479)   # 0.758
+        clf2 = SVC(C=60.0, kernel='rbf', gamma=0.1, random_state=2000)   # 0.758
         # model = clf2
 
         clf3 = LogisticRegression(
             penalty='l2',
-            C=90.0,
-            solver='sag',
-            max_iter=2000,
-            random_state=2000)    # 0.734
+            C=300.0,
+            solver='lbfgs',
+            max_iter=1000,
+            multi_class='multinomial',
+            random_state=2000)
         # model = clf3
 
-        model = VotingClassifier(   # 0.78
+        model = VotingClassifier(   # 0.782
             estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
 
         model.fit(train_x, train_y)
