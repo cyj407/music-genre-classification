@@ -55,57 +55,68 @@ def getData():
     saveDataset.saveFeature(df_x, pd.DataFrame(df_y, columns=['genre']))
     return df_x, df_y
     
+def getModel(classifier):
+    
+    clf1 = RandomForestClassifier(
+        n_estimators=250,
+        max_depth=10,
+        min_samples_split=2,
+        criterion='entropy',
+        min_weight_fraction_leaf=0.01,
+        random_state=2000)
+
+    clf2 = SVC(C=70, kernel='rbf', gamma=0.4, random_state=2000)
+        
+    clf3 = LogisticRegression(
+        penalty='l2',
+        C=150.0,
+        solver='lbfgs',       # sag 140~145, saga 110~115/135
+        max_iter=3000,
+        multi_class='multinomial',
+        random_state=2000)
+
+    if(classifier == 'Random Forest Classifier'):
+        return clf1
+    elif(classifier == 'Support Vector Machine'):
+        return clf2
+    elif(classifier == 'Logistic Regression'):
+        return clf3
+    elif(classifier == 'Voting Classifier'):   
+        model = VotingClassifier(   # 0.806
+            estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
+        return model
+
 def trainModel(df_x, df_y):
 
-    train_acc_list = []
-    test_acc_list = []
+    model_name = [
+        'Random Forest Classifier', 'Support Vector Machine',
+        'Logistic Regression', 'Voting Classifier']
 
-    # 5 Cross Validation - separate to training set and test set
-    kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=888)
-    for train_idx, test_idx in kfold.split(df_x, df_y):
-        train_x, test_x = df_x.iloc[train_idx], df_x.iloc[test_idx]
-        train_y, test_y = df_y.iloc[train_idx], df_y.iloc[test_idx]
+    for i in range(len(model_name)):
 
-        clf1 = RandomForestClassifier(
-            n_estimators=250,
-            max_depth=10,
-            min_samples_split=2,    # 2 > 3 == 4
-            criterion='entropy',
-            min_weight_fraction_leaf=0.01,
-            random_state=2000)
-        # model = clf1
-        
-        clf2 = SVC(C=20, kernel='rbf', gamma=0.35, random_state=2000)  
-        # 23 0.3 / 20 0.35 / 15 67~72 0.4   0.798 / 
-        # 54~62 0.15 / 35 40~41 0.2 / 28~30 0.25 / 17 0.3 / 17~18 0.35 / 13 0.45   0.796
-        
-        # model = clf2
+        model = getModel(model_name[i])
+            
+        train_acc_list = []
+        test_acc_list = []
 
-        clf3 = LogisticRegression(
-            penalty='l2',
-            C=150,
-            solver='newton-cg',
-            max_iter=400,
-            multi_class='multinomial',
-            random_state=2000)
-        # model = clf3
+        # 5 Cross Validation - separate to training set and test set
+        kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=888)
+        for train_idx, test_idx in kfold.split(df_x, df_y):
+            train_x, test_x = df_x.iloc[train_idx], df_x.iloc[test_idx]
+            train_y, test_y = df_y.iloc[train_idx], df_y.iloc[test_idx]
 
-        model = VotingClassifier(   # 0.786
-            estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
-        
-        model.fit(train_x, train_y)
-        train_pred_y = model.predict(train_x)
-        train_acc = metrics.accuracy_score(train_y, train_pred_y)
-        test_pred_y = model.predict(test_x)
-        test_acc = metrics.accuracy_score(test_y, test_pred_y)
-        train_acc_list.append(train_acc)
-        test_acc_list.append(test_acc)
+            model.fit(train_x, train_y)
+            
+            train_pred_y = model.predict(train_x)
+            train_acc = metrics.accuracy_score(train_y, train_pred_y)
+            test_pred_y = model.predict(test_x)
+            test_acc = metrics.accuracy_score(test_y, test_pred_y)
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
 
-    # if(np.mean(test_acc_list) < 0.801):
-        # continue
-    print('Average train accuracy: {}\nAverage validate accuracy: {}'.format(
-        np.mean(train_acc_list), np.mean(test_acc_list)
-    ))
+        print(model_name[i] + ':')
+        print('  Average train accuracy: {}'.format(np.mean(train_acc_list)))
+        print('  Average validation accuracy: {}\n'.format(np.mean(test_acc_list)))
 
     return model
 
@@ -123,11 +134,7 @@ def main():
     dataset_numpy = scaler.fit_transform(df_x.to_numpy())
     df_x = pd.DataFrame(dataset_numpy, columns=df_column)
 
-    # for i in range(122, 170):
-        # print(i)
     model = trainModel(df_x, df_y)
-        # print('--------------------------')
-    # plotImportance(model)
 
 if __name__ == '__main__':
     main()
