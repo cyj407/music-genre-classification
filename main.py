@@ -41,11 +41,8 @@ def getData():
     # features haven't been created
     print("Create Dataset")
     signal, y = saveDataset.dataset()
-    # df_y = pd.DataFrame(data=validation.column_or_1d(y, warn=False), columns=['genre'])
-    # df_y = validation.column_or_1d(df_y, warn=False)
-    df_y = pd.DataFrame(data=y, columns=['genre'])
-    df_y = validation.column_or_1d(df_y)
-
+    df_y = pd.Series(data=y)
+    
     # construct features
     print("Feature Extraction")
     df_x = pd.DataFrame()
@@ -54,13 +51,11 @@ def getData():
             print('audio {}'.format(i + 1))       
         new_x = pd.DataFrame(features.extract(signal[i]), index=[i])
         df_x = df_x.append(new_x)
-        
-    # saveDataset.saveFeature(df_x, df_y)
+    
+    saveDataset.saveFeature(df_x, pd.DataFrame(df_y, columns=['genre']))
     return df_x, df_y
     
 def trainModel(df_x, df_y):
-
-    # df_x = df_x[select_feature]
 
     train_acc_list = []
     test_acc_list = []
@@ -77,7 +72,7 @@ def trainModel(df_x, df_y):
             min_weight_fraction_leaf=0.01,
             random_state=2000)
         # model = clf1
-
+        
         clf2 = SVC(C=64.0, kernel='rbf', gamma=0.1, random_state=2000)
         # model = clf2
 
@@ -92,7 +87,7 @@ def trainModel(df_x, df_y):
 
         model = VotingClassifier(   # 0.784
             estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
-
+        
         model.fit(train_x, train_y)
         train_pred_y = model.predict(train_x)
         train_acc = metrics.accuracy_score(train_y, train_pred_y)
@@ -101,24 +96,21 @@ def trainModel(df_x, df_y):
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
 
-    # if(np.mean(test_acc_list) >= 0.784):
-        # print(train_acc_list)
-        # print(test_acc_list)
     print('Average train accuracy: {}\nAverage validate accuracy: {}'.format(
         np.mean(train_acc_list), np.mean(test_acc_list)
     ))
 
     return model
 
-def plotImportance(model):
+def plotImportance(model):      # model shold be the random forest classifier
     print(model.feature_importances_)
     feat_importances = pd.Series(model.feature_importances_, index=df_column)
     feat_importances.nlargest(len(df_column)).plot(kind='barh')
     plt.show()
 
-
 def main():
     df_x, df_y = getData()
+    df_x = df_x[df_column]
 
     scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
     dataset_numpy = scaler.fit_transform(df_x.to_numpy())

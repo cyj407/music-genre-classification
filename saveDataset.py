@@ -50,9 +50,8 @@ def dataset():
     return x, y
 
 def saveFeature(x, y):
-    x['genre'] = y
+    x['genre'] = y    
     x.to_csv(os.getcwd() + '\\df_no_index_10mfcc.csv', index=0)
-    x.to_csv(os.getcwd() + '\\df_with_index_10mfcc.csv')
 
 def main():
     print(os.getcwd())
