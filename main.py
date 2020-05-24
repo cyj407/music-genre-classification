@@ -68,24 +68,29 @@ def trainModel(df_x, df_y):
 
         clf1 = RandomForestClassifier(
             n_estimators=250,
+            max_depth=10,
+            min_samples_split=2,    # 2 > 3 == 4
             criterion='entropy',
             min_weight_fraction_leaf=0.01,
             random_state=2000)
         # model = clf1
         
-        clf2 = SVC(C=64.0, kernel='rbf', gamma=0.1, random_state=2000)
+        clf2 = SVC(C=20, kernel='rbf', gamma=0.35, random_state=2000)  
+        # 23 0.3 / 20 0.35 / 15 67~72 0.4   0.798 / 
+        # 54~62 0.15 / 35 40~41 0.2 / 28~30 0.25 / 17 0.3 / 17~18 0.35 / 13 0.45   0.796
+        
         # model = clf2
 
         clf3 = LogisticRegression(
             penalty='l2',
-            C=300.0,
+            C=150,
             solver='newton-cg',
-            max_iter=500,
+            max_iter=400,
             multi_class='multinomial',
             random_state=2000)
         # model = clf3
 
-        model = VotingClassifier(   # 0.784
+        model = VotingClassifier(   # 0.786
             estimators=[('rf', clf1), ('svc', clf2), ('lr', clf3)], voting='hard') 
         
         model.fit(train_x, train_y)
@@ -96,6 +101,8 @@ def trainModel(df_x, df_y):
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
 
+    # if(np.mean(test_acc_list) < 0.801):
+        # continue
     print('Average train accuracy: {}\nAverage validate accuracy: {}'.format(
         np.mean(train_acc_list), np.mean(test_acc_list)
     ))
@@ -116,7 +123,10 @@ def main():
     dataset_numpy = scaler.fit_transform(df_x.to_numpy())
     df_x = pd.DataFrame(dataset_numpy, columns=df_column)
 
+    # for i in range(122, 170):
+        # print(i)
     model = trainModel(df_x, df_y)
+        # print('--------------------------')
     # plotImportance(model)
 
 if __name__ == '__main__':
